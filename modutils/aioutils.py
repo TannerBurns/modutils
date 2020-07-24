@@ -25,7 +25,7 @@ def aioexecute(fn: Callable, args: list = None, kwargs: dict = None) -> Any:
 
 def aioloop(fn: Callable, args_list: List[List], loop: Eventloop = None,
                 max_async_pool: int = 16, max_futures: int = 100000, disable_progress_bar: bool = False,
-                progress_bar_color: str = 'green_3a', progress_bar_format: str= None):
+                progress_bar_color: str = 'green_3a', progress_bar_format: str= None) -> list:
     """create new aioloop, run, and return results
 
     :param fn {Callable}: function to map to arguments
@@ -36,6 +36,7 @@ def aioloop(fn: Callable, args_list: List[List], loop: Eventloop = None,
         If there is a lot of arguments and futures is very large, can cause memory issues.
     :param disable_progress_bar {bool}: disable progress bar from printing
     :param progress_bar_color {str}: color of progress bar; default: green
+    :param progress_bar_format {str}: format for progress bar output; default: None
 
 
     :return list of results
