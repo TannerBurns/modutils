@@ -11,7 +11,7 @@ Eventloop = NewType('Eventloop', asyncio.windows_events._WindowsSelectorEventLoo
         if sys.platform == 'win32' else NewType('Eventloop', asyncio.unix_events._UnixSelectorEventLoop)
 
 
-def aioexecute(fn: Callable, args: list = None, kwargs: dict = None) -> Any:
+def aioexecute(fn: Callable, args: list = None) -> Any:
     """aioexecute will fn with the mapped args and kwargs from the executor
 
     :param args: list of required arguments
@@ -19,9 +19,14 @@ def aioexecute(fn: Callable, args: list = None, kwargs: dict = None) -> Any:
 
     :return: Any: return from fn
     """
-    args = args or []
-    kwargs = kwargs or {}
-    return fn(*args, **kwargs)
+    fnargs = []
+    fnkwargs = {}
+    for var in args:
+        if isinstance(var, dict):
+            fnkwargs.update(var)
+        else:
+            fnargs.append(var)
+    return fn(*fnargs, **fnkwargs)
 
 def aioloop(fn: Callable, args_list: List[List], loop: Eventloop = None,
                 max_async_pool: int = 16, max_futures: int = 100000, disable_progress_bar: bool = False,
@@ -52,7 +57,7 @@ def aioloop(fn: Callable, args_list: List[List], loop: Eventloop = None,
         with ThreadPoolExecutor(max_workers=max_async_pool) as executor:
             for index in range(0, len(args_list), max_futures):
                 futures = [
-                    loop.run_in_executor(executor, partial(aioexecute, fn, *args))
+                    loop.run_in_executor(executor, partial(aioexecute, fn, args))
                     for args in args_list[index:index + max_futures]
                 ]
                 results.extend([
