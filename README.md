@@ -70,7 +70,7 @@ add a method called 'bulk' to given function
 
 
             # call the original function
-            add.add(1,2)
+            add(1,2)
 
             # call the newly added bulk function
             args = [[x,y] for x in range(0,5) for y in range(5,10)]
