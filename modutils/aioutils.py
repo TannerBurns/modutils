@@ -34,20 +34,15 @@ def aioloop(function: Callable, args_list: List[List], loop: Eventloop = None,
 
         :return: list -- list of results from aio loop
         """
-
-
         results = []
         with ThreadPoolExecutor(max_workers=max_async_pool) as executor:
             for index in range(0, len(args_list), max_futures):
                 futures = []
-                for arg in args_list:
-                    fnargs = []
+                for fnargs in args_list[index:index+max_futures]:
                     fnkwargs = {}
-                    for a in arg:
-                        if isinstance(a, dict):
-                            fnkwargs.update(a)
-                        else:
-                            fnargs.append(a)
+                    for index in range(0, len(fnargs)):
+                        if isinstance(fnargs[index], dict):
+                            fnkwargs.update(fnargs.pop(index))
                     futures.append(loop.run_in_executor(executor, partial(function, *fnargs, **fnkwargs)))
                 results.extend([
                     await result for result in tqdm(asyncio.as_completed(futures), total=len(futures),
@@ -64,8 +59,8 @@ def aioloop(function: Callable, args_list: List[List], loop: Eventloop = None,
     return loop.run_until_complete(aioexecutor())
 
 
-def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futures: int = 100000, disable_progress_bar: bool = False,
-                progress_bar_color: str = 'green_3a', progress_bar_format: str= None):
+def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futures: int = 100000,
+            disable_progress_bar: bool = False, progress_bar_color: str = 'green_3a', progress_bar_format: str= None):
     """add a method called 'bulk' to given function
 
         :param function {Callable}: function to map to arguments
@@ -83,7 +78,7 @@ def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futu
 
 
             # call the original function
-            add.add(1,2)
+            add(1,2)
 
             # call the newly added bulk function
             args = [[x,y] for x in range(0,5) for y in range(5,10)]
@@ -103,32 +98,9 @@ def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futu
         :return list of results
     """
 
-    def wrapper(args_list: List[list])-> list:
-        async def aiowrapper() -> list:
-            results = []
-            with ThreadPoolExecutor(max_workers=max_async_pool) as executor:
-                for index in range(0, len(args_list), max_futures):
-                    futures = []
-                    for arg in args_list:
-                        fnargs = []
-                        fnkwargs = {}
-                        for a in arg:
-                            if isinstance(a, dict):
-                                fnkwargs.update(a)
-                            else:
-                                fnargs.append(a)
-                        futures.append(loop.run_in_executor(executor, partial(function, *fnargs, **fnkwargs)))
-                    results.extend([
-                        await result for result in tqdm(asyncio.as_completed(futures), total=len(futures),
-                                                        disable=disable_progress_bar, bar_format=progress_bar_format)
-                    ])
-                return results
-        return loop.run_until_complete(aiowrapper())
+    def wrapper(args_list: List[list]) -> list:
+        return aioloop(function, args_list, loop=loop, max_async_pool=max_async_pool, max_futures=max_futures,
+                       disable_progress_bar=disable_progress_bar, progress_bar_color=progress_bar_color,
+                       progress_bar_format=progress_bar_format)
     setattr(function, 'bulk', wrapper)
-    if progress_bar_format is None:
-        progress_bar_format = '{l_bar}%s{bar}%s| {n_fmt}/{total_fmt} [{elapsed}<{remaining},' \
-                 ' {rate_fmt}{postfix}]' % (fg(progress_bar_color), style.RESET)
-    if loop is None:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
     return function
