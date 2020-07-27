@@ -59,8 +59,7 @@ def aioloop(function: Callable, args_list: List[List], loop: Eventloop = None,
     return loop.run_until_complete(aioexecutor())
 
 
-def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futures: int = 100000,
-            disable_progress_bar: bool = False, progress_bar_color: str = 'green_3a', progress_bar_format: str= None):
+def aiobulk(function):
     """add a method called 'bulk' to given function
 
         :param function {Callable}: function to map to arguments
@@ -97,10 +96,11 @@ def aiobulk(function, loop: Eventloop = None, max_async_pool: int = 16, max_futu
 
         :return list of results
     """
-
-    def wrapper(args_list: List[list]) -> list:
+    def bulk(args_list: List[list], loop: Eventloop = None, max_async_pool: int = 16, max_futures: int = 100000,
+             disable_progress_bar: bool = False, progress_bar_color: str = 'green_3a',
+             progress_bar_format: str = None) -> list:
         return aioloop(function, args_list, loop=loop, max_async_pool=max_async_pool, max_futures=max_futures,
                        disable_progress_bar=disable_progress_bar, progress_bar_color=progress_bar_color,
                        progress_bar_format=progress_bar_format)
-    setattr(function, 'bulk', wrapper)
+    setattr(function, 'bulk', bulk)
     return function
