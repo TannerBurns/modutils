@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 
 setup(
     name='modutils',
-    version='0.1.4',
+    version='0.1.5',
     packages=find_packages(),
     include_package_data=True,
     description='A library with modern utilities to assist development efficiency ',
