@@ -334,25 +334,9 @@ nget - nested get call to easily retrieve nested information with a single call 
         nget use an iterable of keys to retrieve nested information and can set a default if a key is not found
     
 
-<<<<<<< Updated upstream
+
 <a name="modutils.stdutils_1737493875"></a>
 ## modutils.stdutils
-
-<a name="fg_1840553876"></a>
-#### `fg(color)`
-
-alias for colored().foreground()
-=======
-<a name="response_to_str_3575013933436391480"></a>
-#### `response_to_str(response: requests.models.Response) -> str`
- 
-convert Response object to an easy to read string
-
-    response_to_str - convert Response object to string and interpret status codes
-    :param response: Response object to convert to string
-    :return: string of Response object
-    
-
 
 <a name="scroll_1683689735572407726"></a>
 #### `scroll(content: list, sleep_timer=1, list_delimiter: str = '\n', indent: int = 4, color: str = None) -> None`
