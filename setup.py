@@ -1,12 +1,12 @@
 import os
 from setuptools import find_packages, setup
 
-with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
+with open(os.path.join(os.path.dirname(__file__), 'DOCS.md')) as readme:
     README = readme.read()
 
 setup(
     name='modutils',
-    version='0.1.6',
+    version='0.1.7',
     packages=find_packages(),
     include_package_data=True,
     description='A library with modern utilities to assist development efficiency ',
@@ -17,7 +17,8 @@ setup(
     author_email='tjburns102@gmail.com',
     install_requires=[
         'requests',
-        'colored'
+        'colored',
+        'tqdm'
     ],
     classifiers=[
         'Operating System :: OS Independent',
