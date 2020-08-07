@@ -64,4 +64,7 @@ def aioloop(fn: Callable, args_list: List[List], loop: Eventloop = None,
         progress_bar_format = '{l_bar}%s{bar}%s| {n_fmt}/{total_fmt} [{elapsed}<{remaining},' \
                  ' {rate_fmt}{postfix}]' % (fg(progress_bar_color), style.RESET)
 
+    if loop is None:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     return loop.run_until_complete(aioexecutor())

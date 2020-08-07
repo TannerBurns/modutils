@@ -13,12 +13,24 @@ from os.path import basename
 from smtplib import SMTP
 from typing import Union, Text
 
+from modutils.decorators import aiobulk
+
+
 class BaseSession(Session):
     retries: int
     verbose: bool
 
     def __init__(self, max_retries: int = 3, pool_connections: int = 16, pool_maxsize: int = 16,
                  resolve_status_codes: list = None, verbose: bool = False, auth: tuple = None):
+        """initialize BaseSession
+
+        :param max_retries: maximum amount of retries if non resolved status code found
+        :param pool_connections: number of pool connection; default 16
+        :param pool_maxsize: max number of connections in pool; default 16
+        :param resolve_status_codes: extra status codes to resolve; default None
+        :param verbose: more verbose logging output if response fails; default False
+        :param auth: basic auth username and password tuple; default None
+        """
         super().__init__()
         adapters = HTTPAdapter(pool_connections=pool_connections, pool_maxsize=pool_maxsize,
                                     max_retries=max_retries)
@@ -26,7 +38,7 @@ class BaseSession(Session):
         self.mount('http://', adapters)
         self.retries = max_retries
         self.verbose = verbose
-        self.resolve_status_codes = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
+        self.resolve_status_codes = [200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 400, 401, 404]
         if isinstance(resolve_status_codes, int):
             self.resolve_status_codes.append(resolve_status_codes)
         elif isinstance(resolve_status_codes, list):
@@ -46,20 +58,20 @@ class BaseSession(Session):
         self._log_msg_fmt = '{method}, {scheme}, {host}, {path}, {content_size}, {user_agent}, {status_code}'
 
 
-    def _log_response(self, response: Response) -> None:
+    def log_response(self, response: Response) -> None:
         """log each requests/response from resolver"""
         self.session_logger.info(self._log_msg_fmt.format(
             scheme=response.url.split("://")[0], host=response.url.split('/')[2], method=response.request.method,
             path=response.request.path_url, status_code=response.status_code, content_size=len(response.content),
             user_agent=response.request.headers.get("User-Agent", "Unknown")))
         if response.status_code >= 300 and self.verbose:
-            self.session_logger.error(f'REPONSE: {response.text}')
+            self.session_logger.error(f'RESPONSE: {response.text}')
 
-    def _resolver(self, request: partial) -> Response:
+    def session_request(self, request: partial) -> Response:
         """attempt to resolve a requests with an invalid status code
 
         if the status code of the requests is not one to resolve:
-            Default:  [200, 201, 202, 203, 204, 205, 206, 207, 208, 226]
+            Default:  [200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 400, 401, 404]
         the requests will be sent up to max_retries or until receiving an accepted status_code
 
         :param request: partial requests function to be used to attempt and resolve a valid response
@@ -71,7 +83,7 @@ class BaseSession(Session):
         while attempt <= self.retries and resp.status_code not in self.resolve_status_codes:
             resp = request()
             attempt += 1
-        self._log_response(resp)
+        self.log_response(resp)
         return resp
 
     def get(self, url: Union[Text, bytes], **kwargs) -> Response:
@@ -83,7 +95,7 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).get, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).get, url, **kwargs))
 
     def head(self, url: Union[Text, bytes], **kwargs) -> Response:
         """ override of requests.Session head
@@ -94,7 +106,7 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).head, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).head, url, **kwargs))
 
     def delete(self, url: Union[Text, bytes], **kwargs) -> Response:
         """ override of requests.Session delete
@@ -105,7 +117,7 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).delete, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).delete, url, **kwargs))
 
     def patch(self, url: Union[Text, bytes], **kwargs) -> Response:
         """ override of requests.Session patch
@@ -116,7 +128,7 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).patch, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).patch, url, **kwargs))
 
     def post(self, url: Union[Text, bytes], **kwargs) -> Response:
         """ override of requests.Session post
@@ -127,7 +139,7 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).post, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).post, url, **kwargs))
 
     def put(self, url: Union[Text, bytes], **kwargs) -> Response:
         """ override of requests.Session put
@@ -138,10 +150,98 @@ class BaseSession(Session):
 
         :return: response from requests
         """
-        return self._resolver(partial(super(BaseSession, self).put, url, **kwargs))
+        return self.session_request(partial(super(BaseSession, self).put, url, **kwargs))
 
 
-class EmailSession(object):
+class BaseAsyncSession(BaseSession):
+
+    def __init__(self, *args, **kwargs):
+        """initialize BaseAsyncSession
+
+        :param args: list of args
+        :param kwargs: dict of named args
+        """
+        if 'pool_maxsize' not in kwargs:
+            kwargs.update({'pool_maxsize': 32})
+        if 'pool_connections' not in kwargs:
+            kwargs.update({'pool_connections': 32})
+        super().__init__(*args, **kwargs)
+
+
+    @aiobulk
+    def get(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession get
+            aiobulk added self.get.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).get(url, ** kwargs)
+
+    @aiobulk
+    def head(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession head
+            aiobulk added self.head.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).head(url, ** kwargs)
+
+    @aiobulk
+    def delete(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession delete
+            aiobulk added self.delete.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).delete(url, ** kwargs)
+
+    @aiobulk
+    def patch(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession patch
+            aiobulk added self.patch.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).patch(url, ** kwargs)
+
+    @aiobulk
+    def post(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession post
+            aiobulk added self.post.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).post(url, ** kwargs)
+
+    @aiobulk
+    def put(self, url: Union[Text, bytes], **kwargs) -> Response:
+        """ override of BaseSession put
+            aiobulk added self.put.bulk
+
+        :param url: url for requests
+        :param kwargs: named arguments for requests
+
+        :return: response from requests
+        """
+        return super(BaseSession, self).put(url, ** kwargs)
+
+
+class Email(object):
 
     def __init__(self, smtp_server, smtp_port, from_address: str = None,
                  authentication_required: bool = False, auth_username: str = None, auth_password: str = None):
