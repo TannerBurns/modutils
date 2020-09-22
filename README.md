@@ -99,6 +99,18 @@ from modutils.http import Email
 ```
 <br>
 
+### Urlscraper
+
+The urlscraper method is an easy way to search web pages for matching content of a given pattern
+
+```python
+from modutils.http import urlscraper
+# this example will use a regex pattern to find all the sha256 hashes in a given blog
+# note: the blog is fake and will need to be replaced for example
+sha256hashes = urlscraper('https://fakeblogsite.com', '[A-Fa-f0-9]{64}', regex=True)
+```
+
+
 ### echo
 
 echo is a fancy print that allows you to easily print objects in their prettiest form, add color, and flush the current line.
@@ -118,6 +130,7 @@ echo({'hello': 'world'}, color='red')
 	- [ aiobulk.\_\_init\_\_ ](#aiobulk.__init___1815237342438632813)
 	- [ aiobulk.bulk ](#aiobulk.bulk_2652515655308176417)
 - [ modutils.http ](#modutils.http_6860961663441781746)
+    - [ urlscraper ](#urlscraper_5869860748378830970)
 	- [ modutils.http.BaseAsyncSession ](#modutils.http.BaseAsyncSession_7048839415358285160)
 		- [ BaseAsyncSession.\_\_init\_\_ ](#BaseAsyncSession.__init___2624241592854672828)
 	- [ modutils.http.BaseSession ](#modutils.http.BaseSession_7129533737347880003)
@@ -195,6 +208,17 @@ add a method called 'bulk' to given function
 <a name="modutils.http_6860961663441781746"></a>
 ## modutils.http
 
+<a name="urlscraper_5869860748378830970"></a>
+#### `urlscraper(url: str, pattern: str, regex: bool = False) -> list`
+
+urlscraper is a simple method to scrape information from a url based on a given string pattern
+
+    :param url: the url to run pattern against
+    :param pattern: the string representation of the pattern
+    :param regex: flag for using a pattern as regex or string compare
+
+    :return: list of strings that matched or contained pattern
+
 <a name="modutils.http.BaseAsyncSession_7048839415358285160"></a>
 ### modutils.http.BaseAsyncSession(self, *args, **kwargs)
 
@@ -251,7 +275,6 @@ Create a new email session
         :param file_attachments: list of paths to attachments for email, default: None
 
         :return: dict
-
 
 <a name="modutils_8302506306604331608"></a>
 ## modutils

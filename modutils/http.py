@@ -12,6 +12,8 @@ from email.utils import formatdate
 from os.path import basename
 from smtplib import SMTP
 from typing import Union, Text
+from bs4 import BeautifulSoup
+from re import findall
 
 from modutils.decorators import aiobulk
 
@@ -329,4 +331,23 @@ class Email(object):
         )
         return self.smtp_session.sendmail(email_from, full_address_list, email.as_string())
 
+
+def urlscraper(url: str, pattern: str, regex:bool=False) -> list:
+    """urlscraper is a simple method to scrape information from a url based on a given string pattern
+
+    :param url: the url to run pattern against
+    :param pattern: the string representation of the pattern
+    :param regex: flag for using a pattern as regex or string compare
+
+    :return: list of strings that matched or contained pattern
+    """
+    matches: list = []
+    resp = BaseSession().get(url, headers={'User-Agent': 'Chrome Python3'})
+    if resp.status_code == 200:
+        soup = BeautifulSoup(resp.content, 'html.parser')
+        if regex:
+            matches.extend([match for text in soup.stripped_strings for match in findall(pattern, text)])
+        else:
+            matches.extend([text for text in soup.stripped_strings if pattern in text])
+    return list(set(matches))
 
