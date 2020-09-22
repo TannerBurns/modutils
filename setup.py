@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 
 setup(
     name='modutils',
-    version='0.1.8',
+    version='0.1.9',
     packages=find_packages(),
     include_package_data=True,
     description='A library with modern utilities to assist development efficiency ',
@@ -18,7 +18,8 @@ setup(
     install_requires=[
         'requests',
         'colored',
-        'tqdm'
+        'tqdm',
+        'beautifulsoup4'
     ],
     classifiers=[
         'Operating System :: OS Independent',
