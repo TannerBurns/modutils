@@ -1,12 +1,12 @@
-from typing import Any, Union, Tuple
+from typing import Any, Union, Tuple, Iterable
 from re import compile, Pattern
-from hashlib import sha256
 from time import sleep
 from json import dumps
 from json.decoder import JSONDecodeError
 from requests import Response
 from colored import fg, style
 from subprocess import Popen, PIPE
+
 
 from modutils.aio import aioloop
 from modutils.http import BaseSession
@@ -18,8 +18,24 @@ Utils to help with new types
 ##################################################################
 '''
 
-
 sha256_pattern: Pattern = compile('[A-Fa-f0-9]{64}')  # non case sensitive matching, can return non unique
+
+def nget(dictionary: dict, keys: Iterable, default: Any = None) -> Any:
+    """nget - nested get call to easily retrieve nested information with a single call and set a default
+    Ex.
+        nget(dict, ['key1', 'key2', ..], default)
+        nget(dict, key1, key2, .., default)
+
+        nget use an iterable of keys to retrieve nested information and can set a default if a key is not found
+    """
+    for key in iter(keys):
+        if not isinstance(dictionary, dict):
+            raise KeyError(f'About to attempt retrieval of {key} on improper type of {type(dictionary)}')
+        if key not in dictionary.keys():
+            return default
+        dictionary = dictionary[key]
+    return dictionary
+
 
 class sha256:
     name = 'sha256'
@@ -44,37 +60,6 @@ class sha256:
             return True
         return False
 
-def nget(d:dict, *args:Union[str, list]) -> Any:
-    """nget - nested get call to easily retrieve nested information with a single call and set a default
-    Ex.
-        nget(dict, ['key1', 'key2', ..], default)
-        nget(dict, key1, key2, .., default)
-
-        nget use an iterable of keys to retrieve nested information and can set a default if a key is not found
-    """
-
-    if len(args) == 0:
-        raise ValueError(f'At least 1 key is required. None given')
-
-    keys = args[0] if (isinstance(args[0], list) or len(args) == 1) else args[:-1]
-    default = args[-1] if len(args) > 1 else None
-
-    if isinstance(d, dict):
-        if isinstance(keys, str):
-            keys = [keys]
-        if isinstance(keys, (tuple, list)):
-            for k in keys:
-                d = d.get(k, default)
-                if d == default:
-                    return default
-            if d:
-                return d
-        else:
-            raise TypeError(f'Invalid type of iterable for keys: {type(keys)!r}. Must be tuple or list')
-    else:
-        raise TypeError(f'First argument must be of type dict, given was type: {type(d)!r}')
-
-    return default
 
 '''
 ##################################################################
