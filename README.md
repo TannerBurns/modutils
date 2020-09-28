@@ -352,7 +352,7 @@ list current pip3 packages in environment
 nget - nested get call to easily retrieve nested information with a single call and set a default
     Ex.
         nget(dict, ['key1', 'key2', ..], default)
-        nget(dict, key1, key2, .., default)
+        nget(dict, ('key1', 'key2', ..), default)
 
         nget use an iterable of keys to retrieve nested information and can set a default if a key is not found
 
