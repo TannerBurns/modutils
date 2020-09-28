@@ -347,7 +347,7 @@ list current pip3 packages in environment
     
 
 <a name="nget_5476107451956719196"></a>
-#### `nget(d: dict, *args: Union[str, list]) -> Any`
+#### `nget(dictionary: dict, keys: Iterable, default: Any = None) -> Any`
 
 nget - nested get call to easily retrieve nested information with a single call and set a default
     Ex.
@@ -355,7 +355,6 @@ nget - nested get call to easily retrieve nested information with a single call 
         nget(dict, key1, key2, .., default)
 
         nget use an iterable of keys to retrieve nested information and can set a default if a key is not found
-    
 
 
 <a name="modutils.stdutils_1737493875"></a>
